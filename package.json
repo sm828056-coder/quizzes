@@ -1,0 +1,11 @@
+{
+  "name": "seoul-quest-multiplayer",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.cjs"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}

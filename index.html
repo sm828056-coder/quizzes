@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080c18">
+  <title>Seoul Quest — Multiplayer quiz</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+    :root {
+      color-scheme: dark;
+      --bg: #080c18;
+      --panel: #111a2c;
+      --panel-2: #0d1526;
+      --line: #293650;
+      --text: #f1f5ff;
+      --muted: #9da9c1;
+      --pink: #ff5bbd;
+      --cyan: #5ef3ff;
+      --purple: #8775ff;
+      --green: #63f2bd;
+      font-family: "DM Sans", sans-serif;
+      font-synthesis: none;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      background:
+        radial-gradient(ellipse at 8% 8%, #ff5bbd24, transparent 28rem),
+        radial-gradient(ellipse at 94% 35%, #417eff24, transparent 32rem),
+        linear-gradient(145deg, #080c18, #0b1020 55%, #0a0d19);
+      color: var(--text);
+    }
+    body::before {
+      position: fixed;
+      z-index: -1;
+      inset: 0;
+      background-image: linear-gradient(#93a9da09 1px, transparent 1px), linear-gradient(90deg, #93a9da09 1px, transparent 1px);
+      background-size: 44px 44px;
+      content: "";
+      pointer-events: none;
+      mask-image: linear-gradient(to bottom, black, transparent 88%);
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    .shell { width: min(1080px, calc(100% - 40px)); margin: 0 auto; }
+    header {
+      min-height: 78px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #9bb1e226;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; font: 700 17px "Space Grotesk", sans-serif; letter-spacing: 1.5px; text-transform: uppercase; }
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #5ef3ff70;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #5ef3ff30, #7c72ff30);
+      color: var(--cyan);
+      box-shadow: 0 0 20px #5ef3ff29;
+    }
+    .network-badge { display: flex; align-items: center; gap: 8px; color: #c7d2e8; font-size: 12px; font-weight: 700; }
+    .network-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px #63f2bd; }
+    main { padding: 51px 0 72px; }
+    .hero { max-width: 730px; margin-bottom: 32px; }
+    .eyebrow { color: var(--cyan); font-size: 11px; font-weight: 800; letter-spacing: 2.4px; text-transform: uppercase; }
+    h1 {
+      margin: 14px 0 12px;
+      background: linear-gradient(100deg, #f6f8ff 10%, #c4caff 55%, #ff91d5 100%);
+      background-clip: text;
+      font: 700 clamp(38px, 6vw, 61px)/1.04 "Space Grotesk", sans-serif;
+      letter-spacing: -3px;
+      -webkit-text-fill-color: transparent;
+    }
+    .intro { max-width: 650px; margin-bottom: 0; color: #a4afc6; font-size: 15px; line-height: 1.65; }
+    .panel {
+      border: 1px solid #8ea4d233;
+      border-radius: 19px;
+      background: linear-gradient(145deg, #141e33f7, #0d1424f7);
+      box-shadow: 0 22px 70px #0000004d, inset 0 1px #ffffff09;
+      backdrop-filter: blur(12px);
+    }
+    .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .action-card { padding: 25px; }
+    .action-icon {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 18px;
+      border: 1px solid #ff5bbd45;
+      border-radius: 13px;
+      background: #ff5bbd17;
+      font-size: 21px;
+    }
+    .action-card:nth-child(2) .action-icon { border-color: #5ef3ff45; background: #5ef3ff12; }
+    h2, h3, p { margin-top: 0; }
+    .action-card h2, .section-title { margin-bottom: 7px; font: 700 20px "Space Grotesk", sans-serif; letter-spacing: -.6px; }
+    .subcopy { margin-bottom: 20px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .field-label { display: block; margin: 14px 0 7px; color: #c1cce0; font-size: 12px; font-weight: 700; }
+    .field {
+      width: 100%;
+      min-height: 46px;
+      padding: 0 13px;
+      border: 1px solid #34425f;
+      border-radius: 9px;
+      outline: none;
+      background: #0a1222;
+      color: var(--text);
+    }
+    .field::placeholder { color: #73819c; }
+    .field:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px #5ef3ff1c; }
+    .primary, .secondary, .danger {
+      min-height: 45px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 0 17px;
+      border: 0;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: filter .16s ease, transform .16s ease;
+    }
+    .primary { background: linear-gradient(100deg, #7565ff, #bd4fff 55%, #ff5bbd); box-shadow: 0 5px 22px #ab4eff40; }
+    .secondary { border: 1px solid #394863; background: #141e31; color: #e6edfc; }
+    .danger { border: 1px solid #ff759d57; background: #ff5b8117; color: #ff9db5; }
+    .primary:hover, .secondary:hover, .danger:hover { filter: brightness(1.13); transform: translateY(-1px); }
+    button:disabled { cursor: not-allowed; filter: grayscale(.5); opacity: .48; transform: none; }
+    button:focus-visible, input:focus-visible { outline: 3px solid #5ef3ff; outline-offset: 3px; }
+    .full-width { width: 100%; margin-top: 16px; }
+    .error-banner {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid #ff759d60;
+      border-radius: 10px;
+      background: #ff5b8117;
+      color: #ffb0c4;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .success-banner {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid #63f2bd50;
+      border-radius: 10px;
+      background: #63f2bd12;
+      color: #9bffda;
+      font-size: 13px;
+    }
+    .lobby-grid { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 18px; }
+    .invite-card, .players-card, .question-card, .scoreboard-card { padding: 24px; }
+    .room-code { margin: 7px 0 12px; color: var(--cyan); font: 700 clamp(35px, 6vw, 50px)/1 "Space Grotesk", sans-serif; letter-spacing: 6px; }
+    .qr-frame { width: 190px; height: 190px; display: grid; place-items: center; margin: 17px auto 14px; border-radius: 15px; background: white; }
+    .qr-frame img { width: 176px; height: 176px; }
+    .join-url { overflow-wrap: anywhere; margin-bottom: 13px; color: #9fabc2; font-size: 11px; text-align: center; }
+    .players-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 17px; }
+    .players-heading h2 { margin: 0; font: 700 19px "Space Grotesk", sans-serif; }
+    .count-pill, .status-pill {
+      padding: 6px 10px;
+      border: 1px solid #5ef3ff30;
+      border-radius: 99px;
+      background: #5ef3ff10;
+      color: var(--cyan);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .player-list { display: grid; gap: 9px; }
+    .player-row {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 12px;
+      border: 1px solid #293650;
+      border-radius: 10px;
+      background: #0d1628;
+    }
+    .player-name { overflow: hidden; color: #e5ebfa; font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .player-tag { flex: 0 0 auto; color: #ff91d5; font-size: 10px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; }
+    .player-score { color: var(--cyan); font-size: 13px; font-weight: 800; }
+    .lobby-actions { display: grid; gap: 10px; margin-top: 18px; }
+    .waiting-note { margin: 13px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
+    .game-grid { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 18px; align-items: start; }
+    .game-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+    .category-pill {
+      display: inline-flex;
+      gap: 7px;
+      align-items: center;
+      padding: 8px 12px;
+      border: 1px solid #ff5bbd38;
+      border-radius: 99px;
+      background: #ff5bbd14;
+      color: #ff91d5;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .question-count { color: #a7b2c9; font-size: 12px; font-weight: 700; }
+    .progress-track { height: 6px; overflow: hidden; border-radius: 99px; background: #202b41; }
+    .progress-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7c72ff, #ff5bbd, #5ef3ff); transition: width .3s ease; }
+    .question-title { margin: 27px 0 21px; font: 600 clamp(21px, 3vw, 28px)/1.35 "Space Grotesk", sans-serif; letter-spacing: -.7px; }
+    .answers { display: grid; gap: 10px; }
+    .answer {
+      width: 100%;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 13px;
+      border: 1px solid #2a3852;
+      border-radius: 10px;
+      background: #0e1627;
+      color: #d8e0f0;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .answer:not(:disabled):hover { border-color: #5ef3ffb3; background: #5ef3ff10; }
+    .answer.selected { border-color: #5ef3ff; background: #5ef3ff15; }
+    .answer.correct { border-color: #39c995; background: #28bb8420; color: #8dffd2; }
+    .answer.incorrect { border-color: #ff759d; background: #ff5b811c; color: #ffadc1; }
+    .letter {
+      width: 29px;
+      height: 29px;
+      display: grid;
+      flex: 0 0 29px;
+      place-items: center;
+      border-radius: 8px;
+      background: #202b41;
+      color: #aebbd4;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .feedback { min-height: 22px; margin: 14px 0 0; color: var(--muted); font-size: 13px; }
+    .feedback.good { color: var(--green); font-weight: 800; }
+    .feedback.bad { color: #ff91aa; font-weight: 800; }
+    .game-controls { display: grid; gap: 10px; margin-top: 17px; }
+    .side-card-title { margin-bottom: 13px; font: 700 17px "Space Grotesk", sans-serif; }
+    .side-list { display: grid; gap: 7px; }
+    .side-list .player-row { min-height: 41px; padding: 7px 9px; }
+    .side-list .player-name { font-size: 12px; }
+    .response-count { margin: 13px 0 0; color: var(--muted); font-size: 12px; }
+    .results { text-align: center; }
+    .result-emoji { margin-bottom: 12px; font-size: 48px; }
+    .results h2 { margin-bottom: 7px; font: 700 32px "Space Grotesk", sans-serif; letter-spacing: -1px; }
+    .results-copy { margin-bottom: 22px; color: var(--muted); font-size: 14px; }
+    .winner-score { margin: 0 0 22px; color: var(--cyan); font: 700 36px "Space Grotesk", sans-serif; }
+    .leaderboard { max-width: 560px; margin: 0 auto 22px; text-align: left; }
+    .leaderboard .player-row { min-height: 56px; }
+    .rank { width: 27px; color: #ffcf70; font: 700 15px "Space Grotesk", sans-serif; }
+    .leader-name { flex: 1; color: #e5ebfa; font-size: 14px; font-weight: 700; }
+    .leader-points { color: var(--cyan); font: 700 15px "Space Grotesk", sans-serif; }
+    .results-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 28px, 560px); }
+      header { min-height: 68px; }
+      main { padding-top: 35px; }
+      .home-grid, .lobby-grid, .game-grid { grid-template-columns: 1fr; }
+      .home-grid, .lobby-grid, .game-grid { gap: 13px; }
+      .action-card, .invite-card, .players-card, .question-card, .scoreboard-card { padding: 20px; }
+      .game-grid aside { order: -1; }
+      .side-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .side-list .player-row { min-width: 0; }
+      .qr-frame { width: 170px; height: 170px; }
+      .qr-frame img { width: 158px; height: 158px; }
+    }
+    @media (max-width: 420px) {
+      .network-badge { font-size: 10px; }
+      .brand { font-size: 14px; }
+      h1 { letter-spacing: -2px; }
+      .side-list { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">Q</span> Seoul Quest</div>
+      <div class="network-badge"><span class="network-dot" aria-hidden="true"></span> Local multiplayer</div>
+    </header>
+
+    <main>
+      <div class="hero">
+        <div class="eyebrow" id="level-label">South Korea · multiplayer</div>
+        <h1>Seoul Quest.<br>Play together.</h1>
+        <p class="intro">Create a room, scan the QR code, and challenge your friends. One shared game, 30 questions, and 10 points for every correct answer.</p>
+      </div>
+
+      <div class="error-banner" id="error" role="alert" hidden></div>
+      <div class="success-banner" id="connection" role="status" hidden></div>
+
+      <section class="home-grid" id="home-view" aria-label="Create or join a quiz">
+        <form class="panel action-card" id="host-form">
+          <div class="action-icon" aria-hidden="true">🎮</div>
+          <h2>Create a game</h2>
+          <p class="subcopy">You'll be the host. Your friends can join with your room code or QR.</p>
+          <label class="field-label" for="host-name">Your name</label>
+          <input class="field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Enter your name" required>
+          <button class="primary full-width" type="submit">Create game <span aria-hidden="true">→</span></button>
+        </form>
+
+        <form class="panel action-card" id="join-form">
+          <div class="action-icon" aria-hidden="true">📲</div>
+          <h2>Join a game</h2>
+          <p class="subcopy">Scan the host's QR code or enter the room code to join the quiz.</p>
+          <label class="field-label" for="join-name">Your name</label>
+          <input class="field" id="join-name" maxlength="24" autocomplete="nickname" placeholder="Enter your name" required>
+          <label class="field-label" for="room-code-input">Room code</label>
+          <input class="field" id="room-code-input" maxlength="6" autocapitalize="characters" autocomplete="off" placeholder="e.g. A4C92F" required>
+          <button class="secondary full-width" type="submit">Join game <span aria-hidden="true">↗</span></button>
+        </form>
+      </section>
+
+      <section id="lobby-view" hidden aria-label="Game lobby">
+        <div class="lobby-grid">
+          <div class="panel invite-card">
+            <div class="eyebrow">Your room code</div>
+            <div class="room-code" id="room-code">------</div>
+            <p class="subcopy">Scan to join on the same Wi-Fi, or enter this code on the game page.</p>
+            <div class="qr-frame"><img id="qr-image" alt="QR code to join this game"></div>
+            <div class="join-url" id="join-url"></div>
+            <button class="secondary full-width" id="copy-link" type="button">Copy invite link</button>
+          </div>
+
+          <div class="panel players-card">
+            <div class="players-heading">
+              <h2>Players in the lobby</h2>
+              <span class="count-pill" id="lobby-count">0 players</span>
+            </div>
+            <div class="player-list" id="lobby-players"></div>
+            <div class="lobby-actions" id="host-lobby-controls" hidden>
+              <button class="primary" id="start-game" type="button">Start 30-question game <span aria-hidden="true">→</span></button>
+              <button class="danger" id="cancel-game" type="button">Stop game</button>
+            </div>
+            <p class="waiting-note" id="guest-waiting" hidden>You're in! The host will start the game soon.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="play-view" hidden aria-label="Quiz in progress">
+        <div class="game-grid">
+          <div class="panel question-card">
+            <div class="game-header">
+              <span class="category-pill" id="category-pill">South Korea</span>
+              <span class="question-count" id="question-count">Question 1 of 30</span>
+            </div>
+            <div class="progress-track" role="progressbar" id="progressbar" aria-label="Quiz progress" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <h2 class="question-title" id="question"></h2>
+            <div class="answers" id="answers"></div>
+            <p class="feedback" id="feedback" aria-live="polite">Choose your answer — each correct answer earns 10 points.</p>
+            <div class="game-controls" id="host-game-controls" hidden>
+              <button class="primary" id="next-question" type="button">Next question <span aria-hidden="true">→</span></button>
+              <button class="danger" id="end-game" type="button">Stop game and show scores</button>
+            </div>
+          </div>
+          <aside class="panel scoreboard-card">
+            <h2 class="side-card-title">Live scores</h2>
+            <div class="side-list" id="live-players"></div>
+            <p class="response-count" id="response-count">0 players answered</p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="panel invite-card results" id="results-view" hidden aria-label="Final scores">
+        <div class="result-emoji" aria-hidden="true">🏆</div>
+        <div class="eyebrow">Game complete</div>
+        <h2 id="winner-title">Final scores</h2>
+        <p class="results-copy" id="winner-copy">10 points for every correct answer.</p>
+        <div class="winner-score" id="winner-score"></div>
+        <div class="leaderboard" id="leaderboard"></div>
+        <div class="results-actions">
+          <button class="primary" id="new-game" type="button">Back to start <span aria-hidden="true">↻</span></button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const views = {
+      home: document.getElementById("home-view"),
+      lobby: document.getElementById("lobby-view"),
+      playing: document.getElementById("play-view"),
+      results: document.getElementById("results-view")
+    };
+    const state = {
+      code: "",
+      playerToken: "",
+      hostToken: "",
+      joinUrl: "",
+      qrCode: "",
+      room: null,
+      lastRenderedQuestion: -1,
+      polling: false,
+      pollTimer: null
+    };
+
+    function showView(name) {
+      for (const [viewName, element] of Object.entries(views)) {
+        element.hidden = viewName !== name;
+      }
+    }
+
+    function showError(message) {
+      const element = document.getElementById("error");
+      element.textContent = message;
+      element.hidden = false;
+    }
+
+    function clearError() {
+      const element = document.getElementById("error");
+      element.textContent = "";
+      element.hidden = true;
+    }
+
+    function setBusy(form, busy) {
+      const button = form.querySelector("button[type=submit]");
+      button.disabled = busy;
+      button.dataset.originalText ||= button.textContent;
+      button.textContent = busy ? "Connecting..." : button.dataset.originalText;
+    }
+
+    async function api(path, options = {}) {
+      const headers = {};
+      if (options.body !== undefined) headers["Content-Type"] = "application/json";
+      if (state.playerToken) headers["X-Player-Token"] = state.playerToken;
+      if (state.hostToken) headers["X-Host-Token"] = state.hostToken;
+      const response = await fetch(path, {
+        method: options.method || "GET",
+        headers,
+        body: options.body === undefined ? undefined : JSON.stringify(options.body),
+        cache: "no-store"
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "The request could not be completed.");
+      return data;
+    }
+
+    function saveSession() {
+      localStorage.setItem("seoul-quest-session", JSON.stringify({
+        code: state.code,
+        playerToken: state.playerToken,
+        hostToken: state.hostToken,
+        joinUrl: state.joinUrl,
+        qrCode: state.qrCode
+      }));
+    }
+
+    function clearSession() {
+      localStorage.removeItem("seoul-quest-session");
+      state.code = "";
+      state.playerToken = "";
+      state.hostToken = "";
+      state.joinUrl = "";
+      state.qrCode = "";
+      state.room = null;
+      state.lastRenderedQuestion = -1;
+      if (state.pollTimer) clearTimeout(state.pollTimer);
+      history.replaceState(null, "", "/");
+    }
+
+    function setRoomUrl(code) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("room", code);
+      history.replaceState(null, "", url);
+    }
+
+    async function pollRoom() {
+      if (!state.code || state.polling) return;
+      state.polling = true;
+      try {
+        const data = await api(`/api/rooms/${encodeURIComponent(state.code)}`);
+        clearError();
+        document.getElementById("connection").hidden = true;
+        renderRoom(data.room);
+      } catch (error) {
+        document.getElementById("connection").textContent = "Connection interrupted. Reconnecting to the game...";
+        document.getElementById("connection").hidden = false;
+        showError(error.message);
+      } finally {
+        state.polling = false;
+        if (state.code && state.room?.state !== "finished") state.pollTimer = setTimeout(pollRoom, 900);
+      }
+    }
+
+    function beginPolling() {
+      if (state.pollTimer) clearTimeout(state.pollTimer);
+      pollRoom();
+    }
+
+    function makePlayerRow(player, showScore = false, rank = 0) {
+      const row = document.createElement("div");
+      row.className = "player-row";
+      if (showScore) {
+        const rankElement = document.createElement("span");
+        rankElement.className = "rank";
+        rankElement.textContent = `#${rank}`;
+        const name = document.createElement("span");
+        name.className = "leader-name";
+        name.textContent = player.name + (player.isHost ? " · host" : "");
+        const points = document.createElement("span");
+        points.className = "leader-points";
+        points.textContent = `${player.score} pts`;
+        row.append(rankElement, name, points);
+      } else {
+        const name = document.createElement("span");
+        name.className = "player-name";
+        name.textContent = player.name;
+        row.append(name);
+        if (player.isHost) {
+          const tag = document.createElement("span");
+          tag.className = "player-tag";
+          tag.textContent = "Host";
+          row.append(tag);
+        } else if (showScore) {
+          const points = document.createElement("span");
+          points.className = "player-score";
+          points.textContent = `${player.score} pts`;
+          row.append(points);
+        }
+      }
+      return row;
+    }
+
+    function renderPlayerLists(room) {
+      const lobbyPlayers = document.getElementById("lobby-players");
+      const livePlayers = document.getElementById("live-players");
+      lobbyPlayers.replaceChildren();
+      livePlayers.replaceChildren();
+      document.getElementById("lobby-count").textContent = `${room.players.length} ${room.players.length === 1 ? "player" : "players"}`;
+      room.players.forEach((player, index) => {
+        lobbyPlayers.append(makePlayerRow(player));
+        const liveRow = makePlayerRow(player, true, index + 1);
+        const response = document.createElement("span");
+        response.className = "player-tag";
+        response.textContent = player.hasAnswered ? "Done" : "Playing";
+        liveRow.append(response);
+        livePlayers.append(liveRow);
+      });
+      document.getElementById("response-count").textContent =
+        `${room.responseCount} of ${room.players.length} ${room.players.length === 1 ? "player has" : "players have"} answered`;
+    }
+
+    function renderRoom(room) {
+      state.room = room;
+      renderPlayerLists(room);
+      if (room.state === "lobby") {
+        showView("lobby");
+        document.getElementById("room-code").textContent = room.code;
+        document.getElementById("qr-image").src = state.qrCode;
+        document.getElementById("join-url").textContent = state.joinUrl;
+        const isHost = Boolean(state.hostToken);
+        document.getElementById("host-lobby-controls").hidden = !isHost;
+        document.getElementById("guest-waiting").hidden = isHost;
+        return;
+      }
+      if (room.state === "playing") {
+        showView("playing");
+        document.getElementById("host-game-controls").hidden = !state.hostToken;
+        renderQuestion(room);
+        return;
+      }
+      showResults(room);
+    }
+
+    function renderQuestion(room) {
+      if (!room.question) return;
+      const questionIndex = room.questionIndex;
+      document.getElementById("category-pill").textContent = `✦ ${room.question.category}`;
+      document.getElementById("question-count").textContent = `Question ${questionIndex + 1} of ${room.questionCount}`;
+      document.getElementById("progressbar").setAttribute("aria-valuenow", String(questionIndex));
+      document.getElementById("progressbar").setAttribute("aria-valuemax", String(room.questionCount));
+      document.getElementById("progress-fill").style.width = `${(questionIndex / room.questionCount) * 100}%`;
+      document.getElementById("next-question").textContent = questionIndex === room.questionCount - 1 ? "Show final scores →" : "Next question →";
+      document.getElementById("question").textContent = room.question.question;
+      const feedback = document.getElementById("feedback");
+      if (room.answer) {
+        feedback.textContent = room.answer.correct ? `Correct! +${room.answer.points} points ✨` : "Not quite — keep going!";
+        feedback.className = `feedback ${room.answer.correct ? "good" : "bad"}`;
+      } else {
+        feedback.textContent = "Choose your answer — each correct answer earns 10 points.";
+        feedback.className = "feedback";
+      }
+      if (state.lastRenderedQuestion === questionIndex) {
+        for (const [index, button] of [...document.querySelectorAll(".answer")].entries()) {
+          button.disabled = Boolean(room.answer);
+          button.classList.toggle("selected", Boolean(room.answer) && button.dataset.index === String(room.answer.index));
+        }
+        return;
+      }
+      state.lastRenderedQuestion = questionIndex;
+      const answers = document.getElementById("answers");
+      answers.replaceChildren();
+      room.question.answers.forEach((answer, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "answer";
+        button.dataset.index = String(index);
+        button.disabled = Boolean(room.answer);
+        const letter = document.createElement("span");
+        letter.className = "letter";
+        letter.textContent = String.fromCharCode(65 + index);
+        const text = document.createElement("span");
+        text.textContent = answer;
+        button.append(letter, text);
+        button.addEventListener("click", () => submitAnswer(index, button));
+        answers.append(button);
+      });
+    }
+
+    async function submitAnswer(answerIndex, button) {
+      button.disabled = true;
+      for (const choice of document.querySelectorAll(".answer")) choice.disabled = true;
+      try {
+        const data = await api(`/api/rooms/${encodeURIComponent(state.code)}/answer`, {
+          method: "POST",
+          body: { answerIndex }
+        });
+        renderRoom(data.room);
+      } catch (error) {
+        showError(error.message);
+        if (state.room) renderRoom(state.room);
+      }
+    }
+
+    function showResults(room) {
+      showView("results");
+      const results = room.results || [];
+      const winner = results[0];
+      const tied = results.length > 1 && winner && results[1].score === winner.score;
+      document.getElementById("winner-title").textContent = !winner || tied ? "Game complete!" : `${winner.name} wins!`;
+      document.getElementById("winner-copy").textContent = `${room.questionIndex} of ${room.questionCount} questions played · 10 points per correct answer`;
+      document.getElementById("winner-score").textContent = winner ? `${winner.score} points` : "No scores yet";
+      const leaderboard = document.getElementById("leaderboard");
+      leaderboard.replaceChildren();
+      results.forEach((player, index) => leaderboard.append(makePlayerRow(player, true, index + 1)));
+    }
+
+    document.getElementById("host-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearError();
+      const form = event.currentTarget;
+      setBusy(form, true);
+      try {
+        const data = await api("/api/rooms", {
+          method: "POST",
+          body: { name: document.getElementById("host-name").value.trim() }
+        });
+        state.code = data.code;
+        state.playerToken = data.playerToken;
+        state.hostToken = data.hostToken;
+        state.joinUrl = data.joinUrl;
+        state.qrCode = data.qrCode;
+        saveSession();
+        setRoomUrl(state.code);
+        renderRoom(data.room);
+        beginPolling();
+      } catch (error) {
+        showError(error.message);
+      } finally {
+        setBusy(form, false);
+      }
+    });
+
+    document.getElementById("join-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearError();
+      const form = event.currentTarget;
+      setBusy(form, true);
+      const code = document.getElementById("room-code-input").value.trim().toUpperCase();
+      try {
+        const data = await api(`/api/rooms/${encodeURIComponent(code)}/join`, {
+          method: "POST",
+          body: { name: document.getElementById("join-name").value.trim() }
+        });
+        state.code = code;
+        state.playerToken = data.playerToken;
+        state.hostToken = "";
+        state.joinUrl = `${window.location.origin}/?room=${encodeURIComponent(code)}`;
+        state.qrCode = "";
+        saveSession();
+        setRoomUrl(state.code);
+        renderRoom(data.room);
+        beginPolling();
+      } catch (error) {
+        showError(error.message);
+      } finally {
+        setBusy(form, false);
+      }
+    });
+
+    document.getElementById("room-code-input").addEventListener("input", (event) => {
+      event.currentTarget.value = event.currentTarget.value.toUpperCase().replace(/[^A-F0-9]/g, "");
+    });
+
+    document.getElementById("start-game").addEventListener("click", async () => {
+      clearError();
+      try {
+        const data = await api(`/api/rooms/${encodeURIComponent(state.code)}/start`, { method: "POST" });
+        renderRoom(data.room);
+      } catch (error) {
+        showError(error.message);
+      }
+    });
+
+    document.getElementById("cancel-game").addEventListener("click", () => stopGame());
+    document.getElementById("end-game").addEventListener("click", () => stopGame());
+
+    async function stopGame() {
+      clearError();
+      try {
+        const data = await api(`/api/rooms/${encodeURIComponent(state.code)}/stop`, { method: "POST" });
+        renderRoom(data.room);
+      } catch (error) {
+        showError(error.message);
+      }
+    }
+
+    document.getElementById("next-question").addEventListener("click", async () => {
+      clearError();
+      try {
+        const data = await api(`/api/rooms/${encodeURIComponent(state.code)}/next`, { method: "POST" });
+        state.lastRenderedQuestion = -1;
+        renderRoom(data.room);
+      } catch (error) {
+        showError(error.message);
+      }
+    });
+
+    document.getElementById("copy-link").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(state.joinUrl);
+        document.getElementById("copy-link").textContent = "Invite link copied!";
+      } catch {
+        showError("Copying isn't available here. Share the room code instead.");
+      }
+    });
+
+    document.getElementById("new-game").addEventListener("click", () => {
+      clearSession();
+      clearError();
+      document.getElementById("connection").hidden = true;
+      showView("home");
+    });
+
+    async function restoreSession() {
+      const queryCode = new URLSearchParams(window.location.search).get("room");
+      if (queryCode) document.getElementById("room-code-input").value = queryCode.toUpperCase();
+      const saved = localStorage.getItem("seoul-quest-session");
+      if (!saved) return;
+      let session;
+      try {
+        session = JSON.parse(saved);
+      } catch (error) {
+        localStorage.removeItem("seoul-quest-session");
+        showError("Your saved game session could not be read. Join the room again with its code.");
+        return;
+      }
+      if (!session.code || !session.playerToken || (queryCode && session.code !== queryCode.toUpperCase())) return;
+      state.code = session.code;
+      state.playerToken = session.playerToken;
+      state.hostToken = session.hostToken || "";
+      state.joinUrl = session.joinUrl || "";
+      state.qrCode = session.qrCode || "";
+      setRoomUrl(state.code);
+      try {
+        const data = await api(`/api/rooms/${encodeURIComponent(state.code)}`);
+        renderRoom(data.room);
+        beginPolling();
+      } catch (error) {
+        showError(error.message);
+        if (error.message.includes("not found") || error.message.includes("not in this game")) {
+          clearSession();
+          if (queryCode) document.getElementById("room-code-input").value = queryCode.toUpperCase();
+        }
+      }
+    }
+
+    restoreSession();
+  </script>
+</body>
+</html>
