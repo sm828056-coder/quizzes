@@ -1,3 +1,3 @@
 window.SeoulQuestConfig = {
-  apiBaseUrl: "https://sm828056-coder.github.io/quizzes/"
+  apiBaseUrl: "3339-faed25094c61e186658e3fcd11c85"
 };
