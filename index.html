@@ -290,14 +290,14 @@
   <div class="shell">
     <header>
       <div class="brand"><span class="brand-mark" aria-hidden="true">Q</span> Seoul Quest</div>
-      <div class="network-badge"><span class="network-dot" aria-hidden="true"></span> Local multiplayer</div>
+      <div class="network-badge"><span class="network-dot" aria-hidden="true"></span> Multiplayer</div>
     </header>
 
     <main>
       <div class="hero">
         <div class="eyebrow" id="level-label">South Korea · multiplayer</div>
         <h1>Seoul Quest.<br>Play together.</h1>
-        <p class="intro">Create a room, scan the QR code, and challenge your friends. One shared game, 30 questions, and 10 points for every correct answer.</p>
+        <p class="intro">Create a room, share the link or QR code, and challenge your friends. One shared game, 30 questions, and 10 points for every correct answer.</p>
       </div>
 
       <div class="error-banner" id="error" role="alert" hidden></div>
@@ -307,7 +307,7 @@
         <form class="panel action-card" id="host-form">
           <div class="action-icon" aria-hidden="true">🎮</div>
           <h2>Create a game</h2>
-          <p class="subcopy">You'll be the host. Your friends can join with your room code or QR.</p>
+          <p class="subcopy">You'll be the host. Friends can join with your room code or invite link.</p>
           <label class="field-label" for="host-name">Your name</label>
           <input class="field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Enter your name" required>
           <button class="primary full-width" type="submit">Create game <span aria-hidden="true">→</span></button>
@@ -316,7 +316,7 @@
         <form class="panel action-card" id="join-form">
           <div class="action-icon" aria-hidden="true">📲</div>
           <h2>Join a game</h2>
-          <p class="subcopy">Scan the host's QR code or enter the room code to join the quiz.</p>
+          <p class="subcopy">Open your host's invite link or enter the room code to join.</p>
           <label class="field-label" for="join-name">Your name</label>
           <input class="field" id="join-name" maxlength="24" autocomplete="nickname" placeholder="Enter your name" required>
           <label class="field-label" for="room-code-input">Room code</label>
@@ -330,7 +330,7 @@
           <div class="panel invite-card">
             <div class="eyebrow">Your room code</div>
             <div class="room-code" id="room-code">------</div>
-            <p class="subcopy">Scan to join on the same Wi-Fi, or enter this code on the game page.</p>
+            <p class="subcopy">Share this QR code or invite link so players can join from any device.</p>
             <div class="qr-frame"><img id="qr-image" alt="QR code to join this game"></div>
             <div class="join-url" id="join-url"></div>
             <button class="secondary full-width" id="copy-link" type="button">Copy invite link</button>
@@ -391,7 +391,9 @@
     </main>
   </div>
 
+  <script src="./config.js"></script>
   <script>
+    const API_BASE_URL = window.SeoulQuestConfig?.apiBaseUrl || window.location.origin;
     const views = {
       home: document.getElementById("home-view"),
       lobby: document.getElementById("lobby-view"),
@@ -440,7 +442,7 @@
       if (options.body !== undefined) headers["Content-Type"] = "application/json";
       if (state.playerToken) headers["X-Player-Token"] = state.playerToken;
       if (state.hostToken) headers["X-Host-Token"] = state.hostToken;
-      const response = await fetch(path, {
+      const response = await fetch(new URL(path, API_BASE_URL), {
         method: options.method || "GET",
         headers,
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
@@ -471,7 +473,9 @@
       state.room = null;
       state.lastRenderedQuestion = -1;
       if (state.pollTimer) clearTimeout(state.pollTimer);
-      history.replaceState(null, "", "/");
+      const url = new URL(window.location.href);
+      url.searchParams.delete("room");
+      history.replaceState(null, "", url);
     }
 
     function setRoomUrl(code) {
@@ -659,7 +663,10 @@
       try {
         const data = await api("/api/rooms", {
           method: "POST",
-          body: { name: document.getElementById("host-name").value.trim() }
+          body: {
+            name: document.getElementById("host-name").value.trim(),
+            appUrl: new URL(window.location.href).origin + new URL(window.location.href).pathname
+          }
         });
         state.code = data.code;
         state.playerToken = data.playerToken;
@@ -691,7 +698,10 @@
         state.code = code;
         state.playerToken = data.playerToken;
         state.hostToken = "";
-        state.joinUrl = `${window.location.origin}/?room=${encodeURIComponent(code)}`;
+        const inviteUrl = new URL(window.location.href);
+        inviteUrl.search = "";
+        inviteUrl.searchParams.set("room", code);
+        state.joinUrl = inviteUrl.href;
         state.qrCode = "";
         saveSession();
         setRoomUrl(state.code);

@@ -181,4 +181,5 @@ const questionBank = [
   }
 ];
 
-module.exports = questionBank;
+if (typeof module !== "undefined") module.exports = questionBank;
+if (typeof window !== "undefined") window.SeoulQuestQuestions = questionBank;

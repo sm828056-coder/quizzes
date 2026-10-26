@@ -4,7 +4,7 @@ const path = require("node:path");
 const { randomBytes } = require("node:crypto");
 const fs = require("node:fs");
 const QRCode = require("qrcode");
-const questions = require("./questions.cjs");
+const questions = require("./questions.js");
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = "0.0.0.0";
@@ -103,7 +103,10 @@ function sendJson(response, status, data) {
   response.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
-    "X-Content-Type-Options": "nosniff"
+    "X-Content-Type-Options": "nosniff",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, X-Player-Token, X-Host-Token"
   });
   response.end(JSON.stringify(data));
 }
@@ -187,7 +190,25 @@ async function handleApi(request, response, url) {
       lastActivity: Date.now()
     };
     rooms.set(code, room);
-    const joinUrl = `http://${lanAddress()}:${PORT}/?room=${code}`;
+    let joinUrl = `http://${lanAddress()}:${PORT}/?room=${code}`;
+    if (typeof data.appUrl === "string") {
+      try {
+        const appUrl = new URL(data.appUrl);
+        if (appUrl.protocol === "https:" || appUrl.protocol === "http:") {
+          if (appUrl.hostname === "localhost" || appUrl.hostname === "127.0.0.1") {
+            appUrl.hostname = lanAddress();
+          }
+          appUrl.search = "";
+          appUrl.hash = "";
+          appUrl.searchParams.set("room", code);
+          joinUrl = appUrl.href;
+        }
+      } catch {
+        errorResponse(response, 400, "The invite page URL is invalid.");
+        rooms.delete(code);
+        return;
+      }
+    }
     const qrCode = await QRCode.toDataURL(joinUrl, {
       errorCorrectionLevel: "M",
       margin: 2,
@@ -329,6 +350,19 @@ function serveFile(response, filePath) {
 
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
+  if (request.method === "OPTIONS" && url.pathname.startsWith("/api/")) {
+    response.writeHead(204, {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, X-Player-Token, X-Host-Token"
+    });
+    response.end();
+    return;
+  }
+  if (request.method === "GET" && url.pathname === "/health") {
+    sendJson(response, 200, { status: "ok" });
+    return;
+  }
   if (url.pathname.startsWith("/api/")) {
     try {
       await handleApi(request, response, url);
@@ -342,11 +376,17 @@ const server = http.createServer(async (request, response) => {
     }
     return;
   }
-  if (request.method !== "GET" || (url.pathname !== "/" && url.pathname !== "/index.html")) {
+  const staticFiles = new Map([
+    ["/", "index.html"],
+    ["/index.html", "index.html"],
+    ["/config.js", "config.js"],
+    ["/questions.js", "questions.js"],
+  ]);
+  if (request.method !== "GET" || !staticFiles.has(url.pathname)) {
     errorResponse(response, 404, "Page not found.");
     return;
   }
-  serveFile(response, path.join(ROOT, "index.html"));
+  serveFile(response, path.join(ROOT, staticFiles.get(url.pathname)));
 });
 
 setInterval(() => {
