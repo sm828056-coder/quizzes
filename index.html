@@ -438,6 +438,9 @@
     }
 
     async function api(path, options = {}) {
+      if (window.location.hostname.endsWith("github.io") && !window.SeoulQuestConfig?.apiBaseUrl) {
+        throw new Error("The multiplayer server is not configured. Set apiBaseUrl in config.js to your Render service URL, then publish GitHub Pages again.");
+      }
       const headers = {};
       if (options.body !== undefined) headers["Content-Type"] = "application/json";
       if (state.playerToken) headers["X-Player-Token"] = state.playerToken;
@@ -448,6 +451,10 @@
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
         cache: "no-store"
       });
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.toLowerCase().includes("application/json")) {
+        throw new Error("The game server returned a webpage instead of game data. Check apiBaseUrl in config.js and make sure the Render service is running.");
+      }
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "The request could not be completed.");
       return data;
