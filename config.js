@@ -1,3 +1,3 @@
 window.SeoulQuestConfig = {
-  apiBaseUrl: "https://my-coustom-api-ovfl.onrender.com"
+  apiBaseUrl: "https://my-custom-api-ovfl.onrender.com"
 };
